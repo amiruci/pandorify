@@ -74,10 +74,29 @@ class Pandorify(webapp.RequestHandler):
         return songs
 
 
-application = webapp.WSGIApplication(
-                                    [('/', MainPage),
-                                     ('/pandorify', Pandorify)],
-                                     debug=True)
+class SpotifySearcher(webapp.RequestHandler):
+    def get(self):
+        try:
+            query = self.request.get('q').strip()
+            result = urllib2.urlopen('http://ws.spotify.com/search/1/track.json?q='+query)
+            json_result = json.loads(result.read())
+            tracks = json_result.get('tracks', {})
+            if not tracks:
+                self.response.out.write('Nothing found for "'+query+'" :(')
+                return
+            self.response.out.write('Showing results for "'+query+'"<br><br>')
+            for track in tracks:
+                self.response.out.write('<a href="'+track['href']+'">' + track['name'] + ' by ' + track['artists'][0]['name'] + '</a><hr>')
+            
+        except urllib2.URLError, e:
+            logging.error(e)
+            self.response.out.write(e)
+
+
+application = webapp.WSGIApplication([('/', MainPage),
+                                      ('/search', SpotifySearcher),
+                                      ('/pandorify', Pandorify)],
+                                      debug=True)
 
 def main():
     run_wsgi_app(application)
