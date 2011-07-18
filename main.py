@@ -31,7 +31,8 @@ class Pandorify(webapp.RequestHandler):
         songs = self.getSongsFromXmlDocument(xmldoc)
         for song in songs:
             # TODO(amir): is this the best we can do?
-            params = urllib.urlencode({'q': song.artist + ' ' + song.title})
+            query = song.artist + ' ' + song.title
+            params = urllib.urlencode({'q': query.encode('utf-8')})
             spotify_song_query = Pandorify.spotify_song_query_template % params
             try:
                 spotify_query_result = urlfetch.fetch(spotify_song_query, method=urlfetch.GET, deadline=10)
@@ -81,7 +82,7 @@ class SpotifySearcher(webapp.RequestHandler):
     def get(self):
         try:
             query = self.request.get('q').strip()
-            params = urllib.urlencode({'q': query})
+            params = urllib.urlencode({'q': query.encode('utf-8')})
             result = urllib2.urlopen('http://ws.spotify.com/search/1/track.json?%s' % params)
             json_result = json.loads(result.read())
             tracks = json_result.get('tracks', {})
@@ -100,7 +101,7 @@ class SpotifySearcher(webapp.RequestHandler):
 application = webapp.WSGIApplication([('/', MainPage),
                                       ('/search', SpotifySearcher),
                                       ('/pandorify', Pandorify)],
-                                      debug=True)
+                                     debug=True)
 
 def main():
     run_wsgi_app(application)
