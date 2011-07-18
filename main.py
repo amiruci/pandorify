@@ -98,12 +98,11 @@ class SpotifySearcher(webapp.RequestHandler):
             self.response.out.write(e)
 
 
-application = webapp.WSGIApplication([('/', MainPage),
-                                      ('/search', SpotifySearcher),
-                                      ('/pandorify', Pandorify)],
-                                     debug=True)
-
 def main():
+    application = webapp.WSGIApplication([('/', MainPage),
+                                          ('/search', SpotifySearcher),
+                                          ('/pandorify', Pandorify)],
+                                         debug=True)
     run_wsgi_app(application)
 
 if __name__ == "__main__":
