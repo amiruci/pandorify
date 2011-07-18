@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import urllib
 import urllib2
 
 from google.appengine.api import urlfetch
@@ -20,7 +21,7 @@ class MainPage(webapp.RequestHandler):
 
 class Pandorify(webapp.RequestHandler):
     
-    spotify_song_query_template = 'http://ws.spotify.com/search/1/track.json?q=%(artist)s %(title)s'
+    spotify_song_query_template = 'http://ws.spotify.com/search/1/track.json?%s'
     
     def post(self):
         url = self.request.get('url').strip()
@@ -29,7 +30,9 @@ class Pandorify(webapp.RequestHandler):
         usock.close()
         songs = self.getSongsFromXmlDocument(xmldoc)
         for song in songs:
-            spotify_song_query = Pandorify.spotify_song_query_template % {'artist': song.artist, 'title': song.title}
+            # TODO(amir): is this the best we can do?
+            params = urllib.urlencode({'q': song.artist + ' ' + song.title})
+            spotify_song_query = Pandorify.spotify_song_query_template % params
             try:
                 spotify_query_result = urlfetch.fetch(spotify_song_query, method=urlfetch.GET, deadline=10)
             except urllib2.URLError, e:
@@ -78,7 +81,8 @@ class SpotifySearcher(webapp.RequestHandler):
     def get(self):
         try:
             query = self.request.get('q').strip()
-            result = urllib2.urlopen('http://ws.spotify.com/search/1/track.json?q='+query)
+            params = urllib.urlencode({'q': query})
+            result = urllib2.urlopen('http://ws.spotify.com/search/1/track.json?%s' % params)
             json_result = json.loads(result.read())
             tracks = json_result.get('tracks', {})
             if not tracks:
